@@ -19,7 +19,7 @@ Add the plugin to your OpenCode config:
 ```json
 {
   "$schema": "https://opencode.ai/config.json",
-  "plugin": ["opencode-lombok"]
+  "plugin": ["@franzmoca/opencode-lombok"]
 }
 ```
 
@@ -28,7 +28,7 @@ You can also pin a specific version:
 ```json
 {
   "$schema": "https://opencode.ai/config.json",
-  "plugin": ["opencode-lombok@0.1.0"]
+  "plugin": ["@franzmoca/opencode-lombok@0.1.0"]
 }
 ```
 
@@ -63,7 +63,7 @@ Or use the GitHub Actions workflow:
 
 ### Required GitHub secret
 
-- `NPM_TOKEN`: npm automation token with publish rights for `opencode-lombok`
+- `NPM_TOKEN`: npm automation token with publish rights for `@franzmoca/opencode-lombok`
 
 ## License
 
