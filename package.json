@@ -5,6 +5,10 @@
   "description": "OpenCode plugin that adds Lombok support for JDTLS",
   "type": "module",
   "license": "MIT",
+  "repository": {
+    "type": "git",
+    "url": "git+https://github.com/franzmoca/opencode-lombok.git"
+  },
   "main": "./dist/index.js",
   "types": "./dist/index.d.ts",
   "exports": {
