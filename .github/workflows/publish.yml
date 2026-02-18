@@ -2,15 +2,56 @@ name: Publish
 
 on:
   push:
-    tags:
-      - "v*"
+    branches:
+      - main
+    paths:
+      - "package.json"
   workflow_dispatch:
 
 jobs:
+  detect-version:
+    runs-on: ubuntu-latest
+    outputs:
+      version: ${{ steps.version.outputs.current }}
+      changed: ${{ steps.version.outputs.changed }}
+    steps:
+      - name: Checkout
+        uses: actions/checkout@v4
+        with:
+          fetch-depth: 2
+
+      - name: Setup Node.js
+        uses: actions/setup-node@v4
+        with:
+          node-version: 22
+
+      - name: Detect version change
+        id: version
+        shell: bash
+        run: |
+          set -euo pipefail
+
+          CURRENT_VERSION=$(node -p "JSON.parse(require('fs').readFileSync('package.json','utf8')).version")
+          PREVIOUS_VERSION=""
+
+          if git show HEAD^:package.json > /tmp/previous-package.json 2>/dev/null; then
+            PREVIOUS_VERSION=$(node -p "JSON.parse(require('fs').readFileSync('/tmp/previous-package.json','utf8')).version")
+          fi
+
+          CHANGED=false
+          if [ -z "${PREVIOUS_VERSION}" ] || [ "${CURRENT_VERSION}" != "${PREVIOUS_VERSION}" ]; then
+            CHANGED=true
+          fi
+
+          echo "current=${CURRENT_VERSION}" >> "$GITHUB_OUTPUT"
+          echo "changed=${CHANGED}" >> "$GITHUB_OUTPUT"
+
   publish:
+    needs: detect-version
+    if: needs.detect-version.outputs.changed == 'true'
     runs-on: ubuntu-latest
     permissions:
-      contents: read
+      contents: write
       id-token: write
     steps:
       - name: Checkout
@@ -43,3 +84,11 @@ jobs:
         run: npm publish --provenance --access public
         env:
           NODE_AUTH_TOKEN: ${{ secrets.NPM_TOKEN }}
+
+      - name: Create GitHub release
+        uses: softprops/action-gh-release@v2
+        with:
+          tag_name: v${{ needs.detect-version.outputs.version }}
+          name: v${{ needs.detect-version.outputs.version }}
+          target_commitish: ${{ github.sha }}
+          generate_release_notes: true

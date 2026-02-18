@@ -27,6 +27,9 @@ const LOMBOK_JAVA_AGENT =
 const isNonEmptyString = (value: unknown): value is string =>
   typeof value === "string" && value.length > 0;
 
+const trimmedStringOrEmpty = (value: unknown): string =>
+  typeof value === "string" ? value.trim() : "";
+
 const resolveFilePath = (value: unknown): string | undefined => {
   if (typeof value === "string") return value;
   if (value instanceof URL && value.protocol === "file:") {
@@ -110,8 +113,8 @@ export function lombokJarPath(dataDir: string = opencodeDataDir()) {
 }
 
 export function isLspDownloadDisabled(env: NodeJS.ProcessEnv = process.env) {
-  const value = env.OPENCODE_DISABLE_LSP_DOWNLOAD || "";
-  return /^(1|true|yes)$/i.test(value.trim());
+  const value = trimmedStringOrEmpty(env.OPENCODE_DISABLE_LSP_DOWNLOAD);
+  return /^(1|true|yes)$/i.test(value);
 }
 
 export async function ensureLombokJar(
@@ -150,10 +153,10 @@ export function formatJavaAgentArg(file: unknown): string | undefined {
 }
 
 export function mergeJavaToolOptions(
-  current: string | undefined,
+  current: unknown,
   file: unknown,
 ) {
-  const existing = current?.trim() || "";
+  const existing = trimmedStringOrEmpty(current);
   if (LOMBOK_JAVA_AGENT.test(existing)) return existing;
   const agent = formatJavaAgentArg(file);
   if (!agent) return existing;

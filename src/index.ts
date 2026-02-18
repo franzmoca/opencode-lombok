@@ -61,10 +61,11 @@ export const LombokPlugin: Plugin = async (ctx) => {
       }
 
       const current = process.env.JAVA_TOOL_OPTIONS;
+      const existing = typeof current === "string" ? current.trim() : "";
       const next = mergeJavaToolOptions(current, jar);
       process.env.JAVA_TOOL_OPTIONS = next;
 
-      if (next === (current?.trim() || "")) {
+      if (next === existing) {
         await log(
           ctx,
           "info",

@@ -59,7 +59,7 @@ npm publish --access public
 Or use the GitHub Actions workflow:
 
 - `CI` runs typecheck, tests, and build on push/PR.
-- `Publish` runs on tags (`v*`) and publishes with `NPM_TOKEN`.
+- `Publish` runs on `main` when `package.json` changes version, publishes to npm, and creates a GitHub release/tag (`v<version>`).
 
 ### Required GitHub secret
 

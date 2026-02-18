@@ -103,6 +103,12 @@ describe("mergeJavaToolOptions", () => {
       mergeJavaToolOptions("-Xmx2g", { path: "/tmp/lombok.jar" } as unknown),
     ).toBe("-Xmx2g");
   });
+
+  test("handles non-string runtime values for existing options", () => {
+    expect(
+      mergeJavaToolOptions({ value: "-Xmx2g" } as unknown, "/tmp/lombok.jar"),
+    ).toBe("-javaagent:/tmp/lombok.jar");
+  });
 });
 
 describe("formatJavaAgentArg", () => {
@@ -170,6 +176,14 @@ describe("isLspDownloadDisabled", () => {
 
   test("returns false when unset", () => {
     expect(isLspDownloadDisabled({})).toBe(false);
+  });
+
+  test("returns false for non-string runtime values", () => {
+    expect(
+      isLspDownloadDisabled({
+        OPENCODE_DISABLE_LSP_DOWNLOAD: true as unknown as string,
+      }),
+    ).toBe(false);
   });
 });
 
