@@ -88,4 +88,3 @@ export const LombokPlugin: Plugin = async (ctx) => {
 };
 
 export default LombokPlugin;
-export * from "./core.js";

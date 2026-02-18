@@ -202,3 +202,12 @@ describe("ensureLombokJar", () => {
     });
   });
 });
+
+describe("plugin entrypoint exports", () => {
+  test("exports only plugin bindings", async () => {
+    const module = await import("../src/index");
+    expect(Object.keys(module).sort().join(",")).toBe(
+      "LombokPlugin,default",
+    );
+  });
+});
