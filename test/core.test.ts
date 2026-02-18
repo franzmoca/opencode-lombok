@@ -97,12 +97,24 @@ describe("mergeJavaToolOptions", () => {
       ),
     ).toBe("-Xmx2g -javaagent:/cache/lombok.jar");
   });
+
+  test("keeps existing options when javaagent path is invalid", () => {
+    expect(
+      mergeJavaToolOptions("-Xmx2g", { path: "/tmp/lombok.jar" } as unknown),
+    ).toBe("-Xmx2g");
+  });
 });
 
 describe("formatJavaAgentArg", () => {
   test("quotes paths with spaces", () => {
     expect(formatJavaAgentArg("/tmp/java tools/lombok.jar")).toBe(
       '-javaagent:"/tmp/java tools/lombok.jar"',
+    );
+  });
+
+  test("returns undefined for non-string runtime values", () => {
+    expect(formatJavaAgentArg({ path: "/tmp/lombok.jar" } as unknown)).toBe(
+      undefined,
     );
   });
 });

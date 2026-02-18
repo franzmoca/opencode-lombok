@@ -143,18 +143,20 @@ export async function ensureLombokJar(
   return resolvedFile;
 }
 
-export function formatJavaAgentArg(file: string) {
+export function formatJavaAgentArg(file: unknown): string | undefined {
+  if (!isNonEmptyString(file)) return undefined;
   if (!/\s/.test(file)) return `-javaagent:${file}`;
   return `-javaagent:"${file.replace(/"/g, '\\"')}"`;
 }
 
 export function mergeJavaToolOptions(
   current: string | undefined,
-  file: string,
+  file: unknown,
 ) {
   const existing = current?.trim() || "";
   if (LOMBOK_JAVA_AGENT.test(existing)) return existing;
   const agent = formatJavaAgentArg(file);
+  if (!agent) return existing;
   if (!existing) return agent;
   return `${existing} ${agent}`;
 }
