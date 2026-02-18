@@ -2,7 +2,7 @@
 
 `opencode-lombok` is an OpenCode plugin that adds Lombok support to Java projects.
 
-This plugin was originally part of [opencode PR #8031](https://github.com/anomalyco/opencode/pull/8031).
+This plugin was inspired by [opencode PR #8031](https://github.com/anomalyco/opencode/pull/8031).
 
 It automatically:
 
