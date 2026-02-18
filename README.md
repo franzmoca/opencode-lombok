@@ -28,7 +28,7 @@ You can also pin a specific version:
 ```json
 {
   "$schema": "https://opencode.ai/config.json",
-  "plugin": ["@franzmoca/opencode-lombok@0.1.0"]
+  "plugin": ["@franzmoca/opencode-lombok@0.1.1"]
 }
 ```
 

@@ -2,6 +2,7 @@ import type { Dirent } from "fs";
 import fs from "fs/promises";
 import os from "os";
 import path from "path";
+import { fileURLToPath } from "url";
 
 const LOMBOK_URL = "https://projectlombok.org/downloads/lombok.jar";
 const BUILD_FILES = new Set(["pom.xml", "build.gradle", "build.gradle.kts"]);
@@ -22,6 +23,17 @@ const LOMBOK_MATCHERS = [
 ];
 const LOMBOK_JAVA_AGENT =
   /-javaagent:(?:"[^"]*lombok\.jar"|[^ "']*lombok\.jar)/i;
+
+const isNonEmptyString = (value: unknown): value is string =>
+  typeof value === "string" && value.length > 0;
+
+const resolveFilePath = (value: unknown): string | undefined => {
+  if (typeof value === "string") return value;
+  if (value instanceof URL && value.protocol === "file:") {
+    return fileURLToPath(value);
+  }
+  return undefined;
+};
 
 const pathExists = async (file: string) =>
   fs
@@ -75,18 +87,26 @@ export function opencodeDataDir(
   env: NodeJS.ProcessEnv = process.env,
   home: string = os.homedir(),
 ) {
-  if (env.XDG_DATA_HOME) return path.join(env.XDG_DATA_HOME, "opencode");
+  const resolvedHome = isNonEmptyString(home) ? home : os.homedir();
+  const xdgDataHome = isNonEmptyString(env.XDG_DATA_HOME)
+    ? env.XDG_DATA_HOME
+    : undefined;
+
+  if (xdgDataHome) return path.join(xdgDataHome, "opencode");
   if (platform === "darwin")
-    return path.join(home, "Library", "Application Support", "opencode");
+    return path.join(resolvedHome, "Library", "Application Support", "opencode");
   if (platform === "win32") {
-    const appData = env.APPDATA || path.win32.join(home, "AppData", "Roaming");
+    const appData = isNonEmptyString(env.APPDATA)
+      ? env.APPDATA
+      : path.win32.join(resolvedHome, "AppData", "Roaming");
     return path.win32.join(appData, "opencode");
   }
-  return path.join(home, ".local", "share", "opencode");
+  return path.join(resolvedHome, ".local", "share", "opencode");
 }
 
 export function lombokJarPath(dataDir: string = opencodeDataDir()) {
-  return path.join(dataDir, "bin", "jdtls", "bin", "lombok.jar");
+  const resolvedDataDir = isNonEmptyString(dataDir) ? dataDir : opencodeDataDir();
+  return path.join(resolvedDataDir, "bin", "jdtls", "bin", "lombok.jar");
 }
 
 export function isLspDownloadDisabled(env: NodeJS.ProcessEnv = process.env) {
@@ -95,14 +115,17 @@ export function isLspDownloadDisabled(env: NodeJS.ProcessEnv = process.env) {
 }
 
 export async function ensureLombokJar(
-  file: string,
+  file: string | URL,
   env: NodeJS.ProcessEnv = process.env,
 ) {
-  const exists = await pathExists(file);
-  if (exists) return file;
+  const resolvedFile = resolveFilePath(file);
+  if (!resolvedFile) return undefined;
+
+  const exists = await pathExists(resolvedFile);
+  if (exists) return resolvedFile;
   if (isLspDownloadDisabled(env)) return undefined;
 
-  await fs.mkdir(path.dirname(file), { recursive: true });
+  await fs.mkdir(path.dirname(resolvedFile), { recursive: true });
   const response = await fetch(LOMBOK_URL).catch(() => undefined);
   if (!response?.ok) return undefined;
 
@@ -110,14 +133,14 @@ export async function ensureLombokJar(
   if (!body) return undefined;
 
   const saved = await fs
-    .writeFile(file, Buffer.from(body))
+    .writeFile(resolvedFile, Buffer.from(body))
     .then(() => true)
     .catch(() => false);
   if (!saved) return undefined;
 
-  const present = await pathExists(file);
+  const present = await pathExists(resolvedFile);
   if (!present) return undefined;
-  return file;
+  return resolvedFile;
 }
 
 export function formatJavaAgentArg(file: string) {

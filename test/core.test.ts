@@ -4,12 +4,14 @@ import os from "os";
 import path from "path";
 import {
   detectLombokDependency,
+  ensureLombokJar,
   formatJavaAgentArg,
   hasLombokDependency,
   isLspDownloadDisabled,
   mergeJavaToolOptions,
   opencodeDataDir,
 } from "../src/core";
+import { pathToFileURL } from "url";
 
 const withTemp = async (fn: (dir: string) => Promise<void>) => {
   const dir = await fs.mkdtemp(path.join(os.tmpdir(), "opencode-lombok-test-"));
@@ -129,6 +131,16 @@ describe("opencodeDataDir", () => {
       "C:\\Users\\user\\AppData\\Roaming\\opencode",
     );
   });
+
+  test("ignores non-string env paths", () => {
+    expect(
+      opencodeDataDir(
+        "linux",
+        { XDG_DATA_HOME: {} as unknown as string },
+        "/home/user",
+      ),
+    ).toBe("/home/user/.local/share/opencode");
+  });
 });
 
 describe("isLspDownloadDisabled", () => {
@@ -146,5 +158,21 @@ describe("isLspDownloadDisabled", () => {
 
   test("returns false when unset", () => {
     expect(isLspDownloadDisabled({})).toBe(false);
+  });
+});
+
+describe("ensureLombokJar", () => {
+  test("returns undefined for non-path runtime values", async () => {
+    expect(
+      await ensureLombokJar({ path: "/tmp/lombok.jar" } as unknown as string),
+    ).toBe(undefined);
+  });
+
+  test("accepts file URLs", async () => {
+    await withTemp(async (dir) => {
+      const jarPath = path.join(dir, "lombok.jar");
+      await fs.writeFile(jarPath, "jar");
+      expect(await ensureLombokJar(pathToFileURL(jarPath))).toBe(jarPath);
+    });
   });
 });
